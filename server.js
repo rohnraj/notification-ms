@@ -1,6 +1,8 @@
 import express from 'express';
 import dotenv from 'dotenv';
 import amqp from 'amqplib';
+import sendEmail from './helper/sendEmail.js';
+
 
 dotenv.config();
 
@@ -33,7 +35,14 @@ const receivingMessage = async () => {
         try {
             const content = msg.content.toString();
             console.log(' [x] Received %s', content);
+            const parsedMessage = JSON.parse(content);
+            const email = parsedMessage?.data?.email;
 
+            if (!email) {
+                throw new Error('Email not found in message payload');
+            }
+
+            await sendEmail(email);
             channel.ack(msg);
         } catch (error) {
             console.error('Failed to process message:', error);
